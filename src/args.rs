@@ -6,12 +6,6 @@ pub struct Opts {
     pub subcmd: SubCommand,
 }
 
-impl ToString for Opts {
-    fn to_string(&self) -> String {
-        "".to_string()
-    }
-}
-
 #[derive(Clap, Debug)]
 pub enum SubCommand {
     State(State),
@@ -21,31 +15,46 @@ pub enum SubCommand {
     Delete(Delete),
 }
 
+impl std::fmt::Display for SubCommand {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+       match *self {
+           SubCommand::State(_) => write!(f, "state"),
+           SubCommand::Create(_) => write!(f, "create"),
+           SubCommand::Start(_) => write!(f, "start"),
+           SubCommand::Kill(_) => write!(f, "kill"),
+           SubCommand::Delete(_) => write!(f, "delete"),
+       }
+    }
+}
+
 #[derive(Clap, Debug)]
 pub struct State {
-    container_id: String,
+    pub container_id: String,
 }
 
 #[derive(Clap, Debug)]
 pub struct Create {
-    container_id: String,
+    pub container_id: String,
 
-    #[clap(long, default_value="/")]
-    bundle: String,
+    #[clap(long, default_value=".")]
+    pub bundle: String,
+
+    #[clap(long, default_value="-1")]
+    pub pid_file: i64,
 }
 
 #[derive(Clap, Debug)]
 pub struct Start {
-    container_id: String,
+    pub container_id: String,
 }
 
 #[derive(Clap, Debug)]
 pub struct Kill {
-    container_id: String,
-    signal: String
+    pub container_id: String,
+    pub signal: String
 }
 
 #[derive(Clap, Debug)]
 pub struct Delete {
-    container_id: String,
+    pub container_id: String,
 }

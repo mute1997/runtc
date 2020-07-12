@@ -1,22 +1,21 @@
+#![feature(backtrace)]
 extern crate exitcode;
 
 mod args;
-mod state;
-mod create;
-mod start;
-mod kill;
-mod delete;
+mod utils;
+mod config;
+mod handler;
+mod container;
 
 use clap::Clap;
 use std::process;
 use std::env;
-use log::{error, info, debug};
 
-use crate::state::state;
-use crate::create::create;
-use crate::start::start;
-use crate::kill::kill;
-use crate::delete::delete;
+use handler::state::state;
+use handler::create::create;
+use handler::start::start;
+use handler::kill::kill;
+use handler::delete::delete;
 
 fn main() {
     let log4rs_config = match env::var("LOG4RS_CONFIG") {
@@ -24,15 +23,19 @@ fn main() {
         Err(_) => "resources/log4rs.yaml".to_string(),
     };
 
-    log4rs::init_file(log4rs_config, Default::default()).unwrap();
-
-    info!("starting runtc.");
+    match log4rs::init_file(log4rs_config, Default::default()) {
+        Err(e) => {
+            log::error!("{}", e);
+            return
+        },
+        _ => {},
+    }
 
     let opts = args::Opts::parse();
 
-    debug!("{:?}", opts);
+    log::info!("starting runtc. options: {:?}", opts);
 
-    let status = match opts.subcmd {
+    let status = match &opts.subcmd {
         args::SubCommand::State(s)  => state(s),
         args::SubCommand::Create(c) => create(c),
         args::SubCommand::Start(s)  => start(s),
@@ -41,12 +44,12 @@ fn main() {
     };
 
     match status {
-        Err(msg) => {
-            error!("{}", msg);
+        Err(e) => {
+            log::error!("subcmd: {}, msg: {}", opts.subcmd, e);
             process::exit(exitcode::SOFTWARE);
         },
         _ => {
-            info!("exit runtc successfully.");
+            log::info!("exit runtc successfully.");
         },
     }
 }
